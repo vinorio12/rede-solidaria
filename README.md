@@ -25,6 +25,8 @@ npm run preview    # serve o build
 
 `demo/rede-solidaria.html` é o app inteiro num único arquivo: baixe e abra com duplo clique no Chrome ou no Edge. Não precisa de Node nem de servidor; os dados ficam no próprio navegador. Para regenerar depois de mudanças no código: `npm run build:arquivo` (sai em `dist-arquivo/`).
 
+**No celular (Android):** mande o arquivo para o celular (e-mail, WhatsApp, Drive ou Teams), baixe, abra o app **Arquivos** › **Downloads**, toque no arquivo e escolha **Chrome**. No iPhone, o Safari não executa arquivos HTML locais; para testar nele, o app precisa estar publicado num endereço `https://`.
+
 Na tela de entrada, escolha um perfil de teste:
 
 | Perfil | Usuário | O que testar |

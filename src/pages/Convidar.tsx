@@ -8,6 +8,7 @@ import { Icone } from '@/components/Icone'
 import { Abas, CabecalhoPagina, Campo } from '@/components/ui'
 import { avisar, confete, tentar } from '@/components/Feedback'
 import { data } from '@/lib/datas'
+import { urlInterna } from '@/lib/ambiente'
 
 const MENSAGENS = {
   colega: (link: string) =>
@@ -29,7 +30,7 @@ export function Convidar() {
   const xpAceite = cfg.tabelaXp.conviteAceito
   const xpConvidado = cfg.tabelaXp.reporteConvidado
   const linkConv = linkConvidadoDe(b, u.id)
-  const urlConvidado = linkConv ? (location.protocol === 'file:' ? `${location.href.split('#')[0]}#/r/${linkConv.codigo}` : `${location.origin}/r/${linkConv.codigo}`) : ''
+  const urlConvidado = linkConv ? urlInterna(`/r/${linkConv.codigo}`) : ''
   const [qrConvidado, setQrConvidado] = useState('')
   const usadosConvidado = b.reportes.filter((r) => r.usuarioId === u.id && r.convidado && r.ciclo === cfg.cicloAtivo && r.status !== 'recusado_colaborador').length
 

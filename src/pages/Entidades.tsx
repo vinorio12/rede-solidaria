@@ -11,6 +11,7 @@ import { baixar } from '@/lib/baixar'
 import { nomeConselho, textoCarta, type DadosCarta } from '@/lib/cartaOficial'
 import { data, diasAte, moeda } from '@/lib/datas'
 import { t } from '@/i18n/pt-BR'
+import { urlInterna } from '@/lib/ambiente'
 
 export function Entidades() {
   const b = useBanco()
@@ -226,7 +227,7 @@ export function CartaDestinacao() {
     try {
       if (!familiar && f.salvarPerfil) atualizarPerfil(u.id, { cpf: f.cpf, endereco: f.endereco })
       const carta = registrarCarta(u.id, e.id, f.valor, f.dataDeposito, 'pf', familiar?.id)
-      const url = location.protocol === 'file:' ? `${location.href.split('#')[0]}#/verificar/${carta.codigo}` : `${location.origin}/verificar/${carta.codigo}`
+      const url = urlInterna(`/verificar/${carta.codigo}`)
       const { gerarCartaPdf } = await import('@/lib/pdf')
       baixar(await gerarCartaPdf({ ...dados, codigo: carta.codigo, urlVerificacao: url, emitidaEm: carta.emitidaEm }), `carta-direcionamento-${carta.codigo}.pdf`)
       setCartaId(carta.id)

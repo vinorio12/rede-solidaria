@@ -5,10 +5,11 @@ import { App } from './App'
 import { tratarFalhaDeVersao } from './lib/carregar'
 import { AVISO_VERSAO_NOVA } from './components/Feedback'
 import './index.css'
+import { arquivoLocal } from '@/lib/ambiente'
 
 tratarFalhaDeVersao()
 
-if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
+if (!arquivoLocal && 'serviceWorker' in navigator) {
   // ao trocar de versão, o service worker recarrega a página; o aviso aparece depois da recarga
   const tinhaVersao = !!navigator.serviceWorker.controller
   navigator.serviceWorker.addEventListener('controllerchange', () => {

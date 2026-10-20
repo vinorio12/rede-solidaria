@@ -8,6 +8,7 @@ import { avisar } from '@/components/Feedback'
 import { baixar } from '@/lib/baixar'
 import { nomeConselho, textoCarta, type DadosCarta } from '@/lib/cartaOficial'
 import { data } from '@/lib/datas'
+import { urlInterna } from '@/lib/ambiente'
 
 // Variante pessoa jurídica da carta oficial (seção 3): só no painel, para
 // destinações institucionais da WEG (IRPJ, Lucro Real).
@@ -51,7 +52,7 @@ export function CartaInstitucional() {
     setGerando(true)
     try {
       const carta = registrarCarta(admin.id, e.id, f.valor, f.dataDeposito, 'pj')
-      const url = location.protocol === 'file:' ? `${location.href.split('#')[0]}#/verificar/${carta.codigo}` : `${location.origin}/verificar/${carta.codigo}`
+      const url = urlInterna(`/verificar/${carta.codigo}`)
       const { gerarCartaPdf } = await import('@/lib/pdf')
       baixar(await gerarCartaPdf({ ...dados, codigo: carta.codigo, urlVerificacao: url, emitidaEm: carta.emitidaEm }), `carta-direcionamento-pj-${carta.codigo}.pdf`)
       avisar('Carta institucional gerada.')

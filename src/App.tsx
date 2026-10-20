@@ -21,6 +21,7 @@ import { Ranking } from '@/pages/Ranking'
 import { Guia } from '@/pages/Guia'
 import { Perfil as PaginaPerfil } from '@/pages/Perfil'
 import { FormularioConvidado } from '@/pages/FormularioConvidado'
+import { arquivoLocal } from '@/lib/ambiente'
 
 // Telas carregadas sob demanda (com nova tentativa se o download falhar)
 const Recompensas = lazyComNovaTentativa(() => import('@/pages/Recompensas').then((m) => m.Recompensas))
@@ -146,7 +147,7 @@ function Rotas() {
 }
 
 // Aberto direto do disco (file://) não há servidor para as rotas: usa rotas com #.
-const Roteador = location.protocol === 'file:' ? HashRouter : BrowserRouter
+const Roteador = arquivoLocal ? HashRouter : BrowserRouter
 
 export function App() {
   return (

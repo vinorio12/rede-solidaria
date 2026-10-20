@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Mascote } from './Mascote'
+import { arquivoLocal } from '@/lib/ambiente'
 
 // Limite de erro (ErrorBoundary): um erro em uma tela mostra uma mensagem
 // amigável em vez de derrubar o app inteiro e deixar a tela branca.
@@ -47,7 +48,7 @@ export class LimiteErro extends Component<Props, Estado> {
             Tentar novamente
           </button>
           {!this.props.local && (
-            <a className="botao-secundario" href={location.protocol === 'file:' ? '#/' : '/'}>
+            <a className="botao-secundario" href={arquivoLocal ? '#/' : '/'}>
               Ir para o início
             </a>
           )}
