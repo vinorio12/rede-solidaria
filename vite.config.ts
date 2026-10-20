@@ -40,6 +40,12 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,png,svg,webp,woff2}'],
+        // remove caches de versões anteriores: um index.html antigo nunca aponta para arquivos que sumiram
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/verificar\//],
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         },
       }),
@@ -48,6 +54,7 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+      exclude: ['e2e/**', 'node_modules/**'],
     },
   }
 })

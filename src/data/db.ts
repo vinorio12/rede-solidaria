@@ -36,10 +36,17 @@ export function getBanco(): Banco {
   return banco
 }
 
-/** Aplica uma mutação e notifica a interface. Gera um novo objeto raiz para o React detectar a mudança. */
+/**
+ * Aplica uma mutação sobre um rascunho e só então publica o novo estado.
+ * O estado anterior nunca é alterado (as telas recebem dados imutáveis) e, se a
+ * regra lançar um erro no meio, nada é gravado.
+ */
 export function mutar<T>(fn: (b: Banco) => T): T {
-  const resultado = fn(banco)
-  banco = { ...banco }
+  const { comprovantes, ...resto } = banco
+  // comprovantes carregam arquivos grandes e nunca são alterados depois de criados
+  const rascunho: Banco = { ...structuredClone(resto), comprovantes: [...comprovantes] }
+  const resultado = fn(rascunho)
+  banco = rascunho
   persistir()
   ouvintes.forEach((o) => o())
   return resultado
@@ -47,7 +54,9 @@ export function mutar<T>(fn: (b: Banco) => T): T {
 
 export function assinar(o: Ouvinte) {
   ouvintes.add(o)
-  return () => ouvintes.delete(o)
+  return () => {
+    ouvintes.delete(o)
+  }
 }
 
 export function restaurarExemplo() {

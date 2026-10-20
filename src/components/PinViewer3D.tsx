@@ -58,13 +58,15 @@ function Disco({ pin, bloqueado, brilho }: { pin: Pin; bloqueado: boolean; brilh
   const grupo = useRef<THREE.Group>(null)
   const face = useTexturaFace(pin, bloqueado)
   const inicioBrilho = useRef<number | null>(null)
-  const { gl } = useThree()
+  const gl = useThree((s) => s.gl)
+  const invalidate = useThree((s) => s.invalidate)
   const arrasto = useRef({ ativo: false, x: 0, y: 0, vx: 0.006, vy: 0 })
   const rot = useRef({ x: -0.15, y: -0.5 })
 
   useEffect(() => {
     if (brilho) inicioBrilho.current = performance.now()
   }, [brilho, pin.ano])
+
 
   // arrastar com mouse ou toque para girar; solta com inércia e volta ao giro lento
   useEffect(() => {
@@ -74,6 +76,7 @@ function Disco({ pin, bloqueado, brilho }: { pin: Pin; bloqueado: boolean; brilh
       arrasto.current.x = e.clientX
       arrasto.current.y = e.clientY
       el.setPointerCapture(e.pointerId)
+      invalidate()
     }
     const move = (e: PointerEvent) => {
       const a = arrasto.current
@@ -84,6 +87,7 @@ function Disco({ pin, bloqueado, brilho }: { pin: Pin; bloqueado: boolean; brilh
       rot.current.x = THREE.MathUtils.clamp(rot.current.x + a.vy, -1.1, 1.1)
       a.x = e.clientX
       a.y = e.clientY
+      invalidate()
     }
     const up = () => (arrasto.current.ativo = false)
     el.addEventListener('pointerdown', down)
@@ -96,7 +100,7 @@ function Disco({ pin, bloqueado, brilho }: { pin: Pin; bloqueado: boolean; brilh
       el.removeEventListener('pointerup', up)
       el.removeEventListener('pointercancel', up)
     }
-  }, [gl])
+  }, [gl, invalidate])
 
   const materiais = useMemo(() => {
     const metal = new THREE.MeshStandardMaterial({ color: bloqueado ? '#3d4a58' : '#d9dee4', metalness: 1, roughness: bloqueado ? 0.6 : 0.22 })
@@ -128,12 +132,20 @@ function Disco({ pin, bloqueado, brilho }: { pin: Pin; bloqueado: boolean; brilh
     [materiais, materialFace],
   )
 
+  const reduzir = useMemo(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false, [])
+
+  // frameloop "demand": só redesenha enquanto há movimento (giro, arrasto ou brilho)
+  useEffect(() => {
+    invalidate()
+  }, [invalidate, face, bloqueado])
+
   useFrame((_, dt) => {
     const g = grupo.current
     if (!g) return
     const a = arrasto.current
+    const giroBase = reduzir ? 0 : 0.006
     if (!a.ativo) {
-      a.vx += (0.006 - a.vx) * Math.min(1, dt * 1.5)
+      a.vx += (giroBase - a.vx) * Math.min(1, dt * 1.5)
       a.vy *= 0.9
       rot.current.y += a.vx
       rot.current.x += (-0.15 - rot.current.x) * Math.min(1, dt * 0.8)
@@ -149,9 +161,11 @@ function Disco({ pin, bloqueado, brilho }: { pin: Pin; bloqueado: boolean; brilh
       } else {
         materialFace.emissiveIntensity = Math.sin(Math.min(t / 2.2, 1) * Math.PI) * 0.55
         g.scale.setScalar(1 + Math.sin(Math.min(t / 0.6, 1) * Math.PI) * 0.12)
-        a.vx = 0.08 * (1 - t / 2.2) + 0.006
+        a.vx = 0.08 * (1 - t / 2.2) + giroBase
       }
     }
+    const parado = !a.ativo && Math.abs(a.vx) < 1e-4 && Math.abs(a.vy) < 1e-4 && inicioBrilho.current === null && Math.abs(rot.current.x + 0.15) < 1e-3
+    if (!parado && document.visibilityState === 'visible') invalidate()
   })
 
   return (
@@ -194,17 +208,39 @@ function ModeloGlb({ url }: { url: string }) {
   useEffect(() => {
     new GLTFLoader().load(url, (g) => setObj(g.scene))
   }, [url])
+  const invalidate = useThree((s) => s.invalidate)
   useFrame((_, dt) => {
     if (grupo.current) grupo.current.rotation.y += dt * 0.5
+    invalidate()
   })
   return <group ref={grupo}>{obj && <primitive object={obj} />}</group>
 }
 
-export default function PinViewer3D({ pin, bloqueado, brilho = false, modeloGlb }: { pin: Pin; bloqueado: boolean; brilho?: boolean; modeloGlb?: string }) {
+export default function PinViewer3D({
+  pin,
+  bloqueado,
+  brilho = false,
+  modeloGlb,
+  aoFalhar,
+}: {
+  pin: Pin
+  bloqueado: boolean
+  brilho?: boolean
+  modeloGlb?: string
+  /** Contexto WebGL perdido (driver, GPU sobrecarregada): a página troca para a imagem 2D. */
+  aoFalhar?: () => void
+}) {
   return (
     <Canvas
+      frameloop="demand"
       camera={{ position: [0, 0, 3.2], fov: 40 }}
       dpr={[1, 2]}
+      onCreated={({ gl }) => {
+        gl.domElement.addEventListener('webglcontextlost', (e) => {
+          e.preventDefault()
+          aoFalhar?.()
+        })
+      }}
       gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
       style={{ touchAction: 'pan-y', cursor: 'grab' }}
       aria-label={`Pin ${pin.ano} em 3D. Arraste para girar.`}

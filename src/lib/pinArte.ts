@@ -91,17 +91,34 @@ export async function desenharFaceProcedural(pin: Pin, tamanho = 512) {
   return c
 }
 
-/** URL da imagem 2D da face (miniaturas e fallback sem WebGL). */
-export async function urlFace(pin: Pin) {
+const cacheFaces = new Map<string, Promise<string>>()
+
+/** URL da imagem 2D da face (miniaturas e fallback sem WebGL), gerada uma vez por pin. */
+export function urlFace(pin: Pin): Promise<string> {
   const arte = arteDoPin(pin)
-  if (arte) return arte.frente
-  return (await desenharFaceProcedural(pin, 256)).toDataURL('image/png')
+  if (arte) return Promise.resolve(arte.frente)
+  const chave = `${pin.ano}-${pin.corBase}-${pin.corRelevo}`
+  let url = cacheFaces.get(chave)
+  if (!url) {
+    url = desenharFaceProcedural(pin, 256).then(
+      (c) => new Promise<string>((ok) => (c.toBlob ? c.toBlob((b) => ok(b ? URL.createObjectURL(b) : c.toDataURL('image/png')), 'image/png') : ok(c.toDataURL('image/png')))),
+    )
+    cacheFaces.set(chave, url)
+  }
+  return url
 }
 
+/**
+ * O Three.js atual só funciona com WebGL 2. Navegadores com apenas WebGL 1
+ * (máquinas virtuais, aceleração gráfica desligada, drivers antigos) usam a imagem 2D.
+ */
 export function suportaWebGL() {
   try {
     const c = document.createElement('canvas')
-    return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')))
+    const gl = c.getContext('webgl2', { failIfMajorPerformanceCaveat: false })
+    if (!gl) return false
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
+    return true
   } catch {
     return false
   }

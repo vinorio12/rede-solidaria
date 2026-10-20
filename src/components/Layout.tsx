@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useSessao, useUsuario } from '@/auth/AuthContext'
 import { useBanco } from '@/data/useBanco'
@@ -6,7 +6,8 @@ import { t } from '@/i18n/pt-BR'
 import type { Perfil } from '@/domain/types'
 import { Icone } from './Icone'
 import { Mascote } from './Mascote'
-import { Avatar } from './ui'
+import { Avatar, Esqueleto } from './ui'
+import { LimiteRota } from './LimiteErro'
 import { nivelDe, xpTotal } from '@/domain/regras'
 
 interface ItemNav {
@@ -133,7 +134,11 @@ export function Layout() {
         </header>
 
         <main id="conteudo" className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-4 md:px-8 md:pb-10 md:pt-6">
-          <Outlet />
+          <LimiteRota>
+            <Suspense fallback={<Esqueleto />}>
+              <Outlet />
+            </Suspense>
+          </LimiteRota>
         </main>
       </div>
 
@@ -180,7 +185,7 @@ export function Layout() {
             </div>
             <nav className="flex flex-col gap-1">
               {itens.map((i) => (
-                <NavLink key={i.para} to={i.para} end={i.para === '/'} className={linkCls}>
+                <NavLink key={i.para} to={i.para} end={i.para === '/'} className={linkCls} onClick={() => setMenu(false)}>
                   <Icone nome={i.icone} />
                   {i.nome}
                 </NavLink>

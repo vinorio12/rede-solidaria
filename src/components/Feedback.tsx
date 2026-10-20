@@ -30,9 +30,21 @@ export function tentar<T>(fn: () => T, sucesso?: string): T | undefined {
 
 const CORES = ['#095BA7', '#00BEDF', '#0063A7', '#9BE7F5', '#00325C']
 
+export const AVISO_VERSAO_NOVA = 'rede-solidaria:versao-nova'
+
 export function CamadaFeedback() {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [rodada, setRodada] = useState(0)
+
+  useEffect(() => {
+    try {
+      if (!sessionStorage.getItem(AVISO_VERSAO_NOVA)) return
+      sessionStorage.removeItem(AVISO_VERSAO_NOVA)
+      setTimeout(() => avisar('Nova versão do app disponível e já aplicada.', 'info'), 300)
+    } catch {
+      /* sem sessionStorage */
+    }
+  }, [])
 
   useEffect(() => {
     const o = (e: Evento) => {

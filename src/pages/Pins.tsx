@@ -1,16 +1,18 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useUsuario } from '@/auth/AuthContext'
 import { useBanco } from '@/data/useBanco'
 import type { Pin } from '@/domain/types'
 import { CabecalhoPagina } from '@/components/ui'
+import { LimiteErro } from '@/components/LimiteErro'
 import { Mascote } from '@/components/Mascote'
 import { Icone } from '@/components/Icone'
 import { confete } from '@/components/Feedback'
 import { arteDoPin, suportaWebGL, urlFace } from '@/lib/pinArte'
 import { data } from '@/lib/datas'
+import { lazyComNovaTentativa } from '@/lib/carregar'
 
-const PinViewer3D = lazy(() => import('@/components/PinViewer3D'))
+const PinViewer3D = lazyComNovaTentativa(() => import('@/components/PinViewer3D').then((m) => m.default))
 const CHAVE_VISTOS = 'rede-solidaria:pins-vistos'
 
 function lerVistos(uid: string): number[] {
@@ -42,7 +44,7 @@ export function Pins() {
   const anoSel = Number(params.get('ano')) || pins.find((p) => p.arte)?.ano || pins[0]?.ano
   const pin = pins.find((p) => p.ano === anoSel) ?? pins[0]
   const conquistado = meus.find((p) => p.ano === pin?.ano)
-  const webgl = useMemo(suportaWebGL, [])
+  const [webgl, setWebgl] = useState(suportaWebGL)
 
   // brilho na primeira vez que o usuário vê um pin recém-desbloqueado
   const [brilho, setBrilho] = useState(false)
@@ -73,9 +75,12 @@ export function Pins() {
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-weg-900 to-[#04213d] text-white" aria-labelledby="pin-titulo">
           <div className="aspect-square max-h-[460px] w-full">
             {webgl ? (
-              <Suspense fallback={<PinFallback pin={pin} bloqueado={!conquistado} />}>
-                <PinViewer3D pin={pin} bloqueado={!conquistado} brilho={brilho} modeloGlb={pin.modeloGlb} />
-              </Suspense>
+              // qualquer falha do 3D (WebGL, download do módulo) cai para a imagem 2D, sem derrubar a página
+              <LimiteErro chave={String(pin.ano)} alternativa={<PinFallback pin={pin} bloqueado={!conquistado} />}>
+                <Suspense fallback={<PinFallback pin={pin} bloqueado={!conquistado} />}>
+                  <PinViewer3D pin={pin} bloqueado={!conquistado} brilho={brilho} modeloGlb={pin.modeloGlb} aoFalhar={() => setWebgl(false)} />
+                </Suspense>
+              </LimiteErro>
             ) : (
               <PinFallback pin={pin} bloqueado={!conquistado} />
             )}

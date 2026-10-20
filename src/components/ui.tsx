@@ -153,3 +153,18 @@ export function Campo({ rotulo, children, ajuda, id }: { rotulo: string; childre
     </label>
   )
 }
+
+/** Esqueleto exibido enquanto uma tela carregada sob demanda chega. */
+export function Esqueleto() {
+  return (
+    <div className="space-y-4" role="status" aria-label="Carregando">
+      <div className="h-8 w-1/2 animate-pulse rounded-xl bg-borda/70" />
+      <div className="h-32 animate-pulse rounded-2xl bg-borda/50" />
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-24 animate-pulse rounded-2xl bg-borda/50" />
+        ))}
+      </div>
+    </div>
+  )
+}

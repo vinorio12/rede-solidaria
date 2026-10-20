@@ -10,8 +10,10 @@
     "build": "tsc -b && vite build",
     "build:arquivo": "tsc -b && vite build --mode arquivo && node scripts/renomear-arquivo.mjs",
     "preview": "vite preview",
-    "test": "vitest run",
-    "typecheck": "tsc -b"
+    "test": "vitest run && playwright test",
+    "typecheck": "tsc -b",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.2",
@@ -25,6 +27,7 @@
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.0",

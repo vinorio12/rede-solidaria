@@ -1,9 +1,11 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { Suspense, type ReactNode } from 'react'
 import { BrowserRouter, HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useSessao } from '@/auth/AuthContext'
 import { Layout } from '@/components/Layout'
 import { CamadaFeedback } from '@/components/Feedback'
 import { Mascote } from '@/components/Mascote'
+import { LimiteErro } from '@/components/LimiteErro'
+import { lazyComNovaTentativa } from '@/lib/carregar'
 import type { Perfil } from '@/domain/types'
 import { Login } from '@/pages/Login'
 import { CadastroConvidado } from '@/pages/CadastroConvidado'
@@ -24,16 +26,16 @@ import { Guia } from '@/pages/Guia'
 import { Perfil as PaginaPerfil } from '@/pages/Perfil'
 
 // Painel administrativo carregado sob demanda
-const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })))
-const Dashboard = lazy(() => import('@/pages/admin/Dashboard').then((m) => ({ default: m.Dashboard })))
-const Validacao = lazy(() => import('@/pages/admin/Validacao').then((m) => ({ default: m.Validacao })))
-const MetaCiclo = lazy(() => import('@/pages/admin/MetaCiclo').then((m) => ({ default: m.MetaCiclo })))
-const Cadastros = lazy(() => import('@/pages/admin/Cadastros').then((m) => ({ default: m.Cadastros })))
-const Importacao = lazy(() => import('@/pages/admin/Importacao').then((m) => ({ default: m.Importacao })))
-const Gamificacao = lazy(() => import('@/pages/admin/Gamificacao').then((m) => ({ default: m.Gamificacao })))
-const Usuarios = lazy(() => import('@/pages/admin/Usuarios').then((m) => ({ default: m.Usuarios })))
-const Relatorios = lazy(() => import('@/pages/admin/Relatorios').then((m) => ({ default: m.Relatorios })))
-const Auditoria = lazy(() => import('@/pages/admin/Auditoria').then((m) => ({ default: m.Auditoria })))
+const AdminLayout = lazyComNovaTentativa(() => import('@/pages/admin/AdminLayout').then((m) => m.AdminLayout))
+const Dashboard = lazyComNovaTentativa(() => import('@/pages/admin/Dashboard').then((m) => m.Dashboard))
+const Validacao = lazyComNovaTentativa(() => import('@/pages/admin/Validacao').then((m) => m.Validacao))
+const MetaCiclo = lazyComNovaTentativa(() => import('@/pages/admin/MetaCiclo').then((m) => m.MetaCiclo))
+const Cadastros = lazyComNovaTentativa(() => import('@/pages/admin/Cadastros').then((m) => m.Cadastros))
+const Importacao = lazyComNovaTentativa(() => import('@/pages/admin/Importacao').then((m) => m.Importacao))
+const Gamificacao = lazyComNovaTentativa(() => import('@/pages/admin/Gamificacao').then((m) => m.Gamificacao))
+const Usuarios = lazyComNovaTentativa(() => import('@/pages/admin/Usuarios').then((m) => m.Usuarios))
+const Relatorios = lazyComNovaTentativa(() => import('@/pages/admin/Relatorios').then((m) => m.Relatorios))
+const Auditoria = lazyComNovaTentativa(() => import('@/pages/admin/Auditoria').then((m) => m.Auditoria))
 
 const INTERNOS: Perfil[] = ['colaborador', 'embaixador', 'admin']
 
@@ -131,10 +133,12 @@ const Roteador = location.protocol === 'file:' ? HashRouter : BrowserRouter
 export function App() {
   return (
     <Roteador>
-      <AuthProvider>
-        <Rotas />
-        <CamadaFeedback />
-      </AuthProvider>
+      <LimiteErro>
+        <AuthProvider>
+          <Rotas />
+          <CamadaFeedback />
+        </AuthProvider>
+      </LimiteErro>
     </Roteador>
   )
 }

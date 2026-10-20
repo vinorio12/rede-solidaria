@@ -6,3 +6,5 @@ dev-dist
 coverage
 *.tsbuildinfo
 dist-arquivo
+test-results
+playwright-report
