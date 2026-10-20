@@ -19,6 +19,10 @@ npm run build      # build de produção (PWA) em dist/
 npm run preview    # serve o build
 ```
 
+### Testar sem instalar nada
+
+`demo/rede-solidaria.html` é o app inteiro num único arquivo: baixe e abra com duplo clique no Chrome ou no Edge. Não precisa de Node nem de servidor; os dados ficam no próprio navegador. Para regenerar depois de mudanças no código: `npm run build:arquivo` (sai em `dist-arquivo/`).
+
 Na tela de entrada, escolha um perfil de teste:
 
 | Perfil | Usuário | O que testar |

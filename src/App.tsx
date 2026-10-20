@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useSessao } from '@/auth/AuthContext'
 import { Layout } from '@/components/Layout'
 import { CamadaFeedback } from '@/components/Feedback'
@@ -125,13 +125,16 @@ function Rotas() {
   )
 }
 
+// Aberto direto do disco (file://) não há servidor para as rotas: usa rotas com #.
+const Roteador = location.protocol === 'file:' ? HashRouter : BrowserRouter
+
 export function App() {
   return (
-    <BrowserRouter>
+    <Roteador>
       <AuthProvider>
         <Rotas />
         <CamadaFeedback />
       </AuthProvider>
-    </BrowserRouter>
+    </Roteador>
   )
 }
