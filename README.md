@@ -8,9 +8,12 @@ Uma única base de código para **web e celular**: React + TypeScript + Vite + T
 
 ## Como rodar
 
+Requer Node.js 20.19 ou mais recente.
+
 ```bash
 npm install
 npm run dev        # desenvolvimento em http://localhost:5173
+npm run celular    # mesmo servidor, acessível pelo celular na mesma rede Wi-Fi (use o endereço "Network")
 npm test           # regras de negócio e critérios de aceite
 npm run build      # build de produção (PWA) em dist/
 npm run preview    # serve o build
