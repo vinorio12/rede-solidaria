@@ -1,0 +1,6 @@
+{
+  "appId": "net.weg.redesolidaria",
+  "appName": "Rede Solidária",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" }
+}

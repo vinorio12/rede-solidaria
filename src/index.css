@@ -1,0 +1,178 @@
+@import 'tailwindcss';
+
+/* Paleta institucional (seção 4). Vermelho proibido: estados de erro usam âmbar escuro. */
+@theme {
+  --color-weg-900: #00325c;
+  --color-weg-700: #0063a7;
+  --color-rs-azul: #095ba7;
+  --color-rs-ciano: #00bedf;
+  --color-rs-ciano-claro: #d9f6fb;
+  --color-alerta: #b45309;
+  --color-alerta-claro: #fef3c7;
+  --color-sucesso: #0f7b4f;
+  --color-sucesso-claro: #dcf5e9;
+
+  --color-fundo: var(--tema-fundo);
+  --color-superficie: var(--tema-superficie);
+  --color-texto: var(--tema-texto);
+  --color-suave: var(--tema-suave);
+  --color-borda: var(--tema-borda);
+
+  --font-titulo: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  --font-texto: Calibri, Carlito, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+:root {
+  --tema-fundo: #f3f7fb;
+  --tema-superficie: #ffffff;
+  --tema-texto: #10233a;
+  --tema-suave: #4a5d73;
+  --tema-borda: #d6e2ee;
+  color-scheme: light;
+}
+
+:root[data-tema='rc_tema_ceu'] {
+  --tema-fundo: #e9f8fc;
+  --tema-borda: #b9e6f1;
+}
+
+:root[data-tema='rc_tema_noite'] {
+  --tema-fundo: #001a30;
+  --tema-superficie: #062a4a;
+  --tema-texto: #eaf3fb;
+  --tema-suave: #a9c2da;
+  --tema-borda: #164a75;
+  color-scheme: dark;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--tema-fundo);
+  color: var(--tema-texto);
+  font-family: var(--font-texto);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-titulo);
+  line-height: 1.25;
+}
+
+/* Foco visível para navegação por teclado */
+:focus-visible {
+  outline: 3px solid var(--color-rs-ciano);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@utility cartao {
+  @apply rounded-2xl border border-borda bg-superficie p-4 shadow-sm;
+}
+@utility botao {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 font-titulo text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility botao-primario {
+  @apply botao bg-rs-azul text-white hover:bg-weg-700 active:bg-weg-900;
+}
+@utility botao-secundario {
+  @apply botao border border-rs-azul bg-superficie text-rs-azul hover:bg-rs-ciano-claro;
+}
+@utility botao-fantasma {
+  @apply botao text-rs-azul hover:bg-rs-ciano-claro;
+}
+@utility campo {
+  @apply min-h-11 w-full rounded-xl border border-borda bg-superficie px-3 py-2 text-texto focus:border-rs-azul focus:outline-none focus:ring-2 focus:ring-rs-ciano/40;
+}
+@utility rotulo {
+  @apply mb-1 block text-sm font-semibold text-texto;
+}
+@utility chip {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold;
+}
+@utility titulo-pagina {
+  @apply font-titulo text-2xl font-bold text-weg-900;
+}
+:root[data-tema='rc_tema_noite'] .titulo-pagina {
+  color: #fff;
+}
+:root[data-tema='rc_tema_noite'] .text-weg-900 {
+  color: #d7ebfa;
+}
+
+/* Confete e microanimações discretas */
+@keyframes cair {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--dx), 100vh, 0) rotate(720deg);
+    opacity: 0;
+  }
+}
+@keyframes pulo {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes aceno {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-4deg);
+  }
+  75% {
+    transform: rotate(4deg);
+  }
+}
+@keyframes girar-pin {
+  from {
+    transform: rotateY(0);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+@keyframes brilho {
+  0% {
+    transform: translateX(-120%) rotate(20deg);
+  }
+  100% {
+    transform: translateX(220%) rotate(20deg);
+  }
+}
+.anima-pulo {
+  animation: pulo 1.6s ease-in-out infinite;
+}
+.anima-aceno {
+  animation: aceno 2.4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
