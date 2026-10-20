@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useUsuario } from '@/auth/AuthContext'
 import { useBanco } from '@/data/useBanco'
-import { registrarVisita } from '@/domain/servicos'
+import { registrarVisitaProjeto } from '@/domain/servicos'
 import type { Projeto } from '@/domain/types'
 import { Icone } from '@/components/Icone'
 import { Abas, CabecalhoPagina, Vazio } from '@/components/ui'
@@ -207,7 +207,7 @@ export function DetalheProjeto() {
   useEffect(() => {
     if (!p || registrado.current) return
     registrado.current = true
-    const feitas = registrarVisita(u.id, 'projeto', p.id)
+    const feitas = registrarVisitaProjeto(u.id, p)
     if (feitas.length) {
       confete()
       avisar(`Missão concluída: ${feitas.map((m) => m.titulo).join(', ')}`)

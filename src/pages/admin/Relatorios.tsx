@@ -43,7 +43,7 @@ export function participantesValidados(b: Banco, ano: number): Relatorio {
         new Set(reps.filter((r) => r.familiarId).map((r) => r.familiarId)).size,
         reps.reduce((s, r) => s + r.valor, 0),
         R.xpCiclo(b, id, ano),
-        R.nivelDe(R.xpTotal(b, id), b.niveis).atual.nome,
+        `${R.statusJogador(b, id).atual.nivel} · ${R.statusJogador(b, id).titulo}`,
       ]
     }),
   }
@@ -59,7 +59,8 @@ export function Relatorios() {
       titulo: 'Participação por recorte',
       descricao: 'Por unidade, município, fundo e modalidade, com o total arrecadado.',
       gerar: () => [
-        agrupar(b, ano, (r) => b.unidades.find((x) => x.id === b.usuarios.find((u) => u.id === r.usuarioId)?.unidadeId)?.nome ?? 'Convidados', 'Unidade'),
+        agrupar(b, ano, (r) => b.unidades.find((x) => x.id === b.usuarios.find((u) => u.id === r.usuarioId)?.unidadeId)?.nome ?? 'Sem unidade', 'Unidade'),
+        agrupar(b, ano, (r) => (r.convidado ? 'Reporte de convidado' : r.familiarId ? 'Familiar' : 'Próprio'), 'Origem'),
         agrupar(b, ano, (r) => `${r.municipio}/${r.uf}`, 'Município'),
         agrupar(b, ano, (r) => t.fundo[r.fundoTipo], 'Fundo'),
         agrupar(b, ano, (r) => t.modalidade[r.modalidade], 'Modalidade'),
@@ -96,13 +97,14 @@ export function Relatorios() {
         return [
           {
             nome: 'Homenageados',
-            colunas: ['Nome', 'Unidade', 'Nível', 'Insígnias', 'Ciclos de participação', 'Pin da edição'],
+            colunas: ['Nome', 'Unidade', 'Nível e título', 'Tier', 'Insígnias', 'Ciclos de participação', 'Pin da edição'],
             linhas: [...new Set(R.reportesValidados(b, (r) => r.ciclo === ano).map((r) => r.usuarioId))].map((id) => {
               const u = b.usuarios.find((x) => x.id === id)!
               return [
                 u.nome,
-                b.unidades.find((x) => x.id === u.unidadeId)?.nome ?? 'Convidado',
-                R.nivelDe(R.xpTotal(b, id), b.niveis).atual.nome,
+                b.unidades.find((x) => x.id === u.unidadeId)?.nome ?? '',
+                `${R.statusJogador(b, id).atual.nivel} · ${R.statusJogador(b, id).titulo}`,
+                R.statusJogador(b, id).tierNome,
                 b.usuarioInsignias.filter((i) => i.usuarioId === id).length,
                 R.ciclosParticipados(b, id).length,
                 b.usuarioPins.some((x) => x.usuarioId === id && x.ano === ano) ? 'Sim' : 'Não',

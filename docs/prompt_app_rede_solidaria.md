@@ -3,6 +3,8 @@
 > Versão 1.0, outubro de 2026, Seção Desenvolvimento Social | Departamento de Sustentabilidade
 > Uso interno. Cole este prompt na ferramenta de desenvolvimento escolhida. Os trechos marcados com **[A CONFIRMAR]** dependem de decisão da equipe ou de dados ainda não fornecidos.
 
+> **Atualizado pela evolução v2** ([`prompt_evolucao_v2_gamificacao.md`](prompt_evolucao_v2_gamificacao.md)): o perfil Convidado, o padrinho, o ranking "Família e Amigos" e a tabela `vinculos_convidado` deixaram de existir. O convidado agora reporta por um link público gerado pelo colaborador, sem cadastro, e o XP vai para o colaborador. A carta segue o modelo oficial (variantes PF e PJ), e a gamificação (níveis, insígnias, missões, ranking, recompensas) passou a seguir as seções 4 a 9 do documento v2. Os trechos abaixo que tratam desses temas valem apenas como histórico.
+
 ---
 
 ## 1. Papel e objetivo

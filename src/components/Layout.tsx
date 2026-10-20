@@ -6,45 +6,77 @@ import { t } from '@/i18n/pt-BR'
 import type { Perfil } from '@/domain/types'
 import { Icone } from './Icone'
 import { Mascote } from './Mascote'
-import { Avatar, Esqueleto } from './ui'
+import { Esqueleto } from './ui'
 import { LimiteRota } from './LimiteErro'
-import { nivelDe, xpTotal } from '@/domain/regras'
+import { statusJogador } from '@/domain/consultas'
+import { AvatarLeao } from './AvatarLeao'
+import { Patinhas } from './Jogo'
 
 interface ItemNav {
   para: string
   nome: string
   icone: string
+  secao: 'principal' | 'jogo' | 'rede' | 'conta'
   perfis?: Perfil[]
 }
 
-const TODOS: Perfil[] = ['colaborador', 'convidado', 'embaixador', 'admin']
-const INTERNOS: Perfil[] = ['colaborador', 'embaixador', 'admin']
-
 export const ITENS: ItemNav[] = [
-  { para: '/', nome: t.nav.inicio, icone: 'inicio', perfis: TODOS },
-  { para: '/reportar', nome: t.nav.reportar, icone: 'reportar', perfis: TODOS },
-  { para: '/missoes', nome: t.nav.missoes, icone: 'missoes', perfis: TODOS },
-  { para: '/ranking', nome: t.nav.ranking, icone: 'ranking', perfis: INTERNOS },
-  { para: '/perfil', nome: t.nav.perfil, icone: 'perfil', perfis: TODOS },
-  { para: '/reportes', nome: t.nav.meusReportes, icone: 'documento', perfis: TODOS },
-  { para: '/projetos', nome: t.nav.projetos, icone: 'projetos', perfis: TODOS },
-  { para: '/entidades', nome: t.nav.entidades, icone: 'entidades', perfis: TODOS },
-  { para: '/guia', nome: t.nav.guia, icone: 'guia', perfis: TODOS },
-  { para: '/recompensas', nome: t.nav.recompensas, icone: 'recompensas', perfis: INTERNOS },
-  { para: '/pins', nome: t.nav.pins, icone: 'pins', perfis: INTERNOS },
-  { para: '/convidar', nome: t.nav.convidar, icone: 'convidar', perfis: INTERNOS },
-  { para: '/familia', nome: t.nav.familia, icone: 'familia', perfis: INTERNOS },
-  { para: '/padrinho', nome: t.nav.padrinho, icone: 'usuarios', perfis: INTERNOS },
-  { para: '/admin', nome: t.nav.admin, icone: 'admin', perfis: ['admin'] },
+  { para: '/', nome: t.nav.inicio, icone: 'inicio', secao: 'principal' },
+  { para: '/reportar', nome: t.nav.reportar, icone: 'reportar', secao: 'principal' },
+  { para: '/missoes', nome: t.nav.missoes, icone: 'missoes', secao: 'principal' },
+  { para: '/ranking', nome: t.nav.ranking, icone: 'ranking', secao: 'principal' },
+  { para: '/perfil', nome: t.nav.perfil, icone: 'perfil', secao: 'principal' },
+  { para: '/conquistas', nome: t.nav.conquistas, icone: 'estrela', secao: 'jogo' },
+  { para: '/trilha', nome: t.nav.trilha, icone: 'grafico', secao: 'jogo' },
+  { para: '/loja', nome: t.nav.loja, icone: 'recompensas', secao: 'jogo' },
+  { para: '/personalizar', nome: t.nav.personalizar, icone: 'editar', secao: 'jogo' },
+  { para: '/alcateia', nome: t.nav.alcateia, icone: 'usuarios', secao: 'jogo' },
+  { para: '/mural', nome: t.nav.mural, icone: 'mensagem', secao: 'jogo' },
+  { para: '/recompensas', nome: t.nav.recompensas, icone: 'pins', secao: 'jogo' },
+  { para: '/pins', nome: t.nav.pins, icone: 'pins', secao: 'jogo' },
+  { para: '/reportes', nome: t.nav.meusReportes, icone: 'documento', secao: 'rede' },
+  { para: '/convidados', nome: t.nav.convidados, icone: 'convidar', secao: 'rede' },
+  { para: '/convidar', nome: t.nav.convidar, icone: 'compartilhar', secao: 'rede' },
+  { para: '/familia', nome: t.nav.familia, icone: 'familia', secao: 'rede' },
+  { para: '/projetos', nome: t.nav.projetos, icone: 'projetos', secao: 'rede' },
+  { para: '/entidades', nome: t.nav.entidades, icone: 'entidades', secao: 'rede' },
+  { para: '/guia', nome: t.nav.guia, icone: 'guia', secao: 'rede' },
+  { para: '/admin', nome: t.nav.admin, icone: 'admin', secao: 'conta', perfis: ['admin'] },
 ]
 
-const INFERIOR: Record<'interno' | 'convidado', string[]> = {
-  interno: ['/', '/reportar', '/missoes', '/ranking', '/perfil'],
-  convidado: ['/', '/reportar', '/missoes', '/guia', '/perfil'],
-}
+const SECOES: { id: ItemNav['secao']; nome?: string }[] = [
+  { id: 'principal' },
+  { id: 'jogo', nome: t.nav.secaoJogo },
+  { id: 'rede', nome: t.nav.secaoRede },
+  { id: 'conta', nome: t.nav.secaoConta },
+]
+
+const INFERIOR = ['/', '/reportar', '/missoes', '/ranking', '/perfil']
 
 export function itensDoPerfil(perfil: Perfil) {
   return ITENS.filter((i) => !i.perfis || i.perfis.includes(perfil))
+}
+
+function MenuSecoes({ itens, aoClicar }: { itens: ItemNav[]; aoClicar?: () => void }) {
+  return (
+    <>
+      {SECOES.map((s) => {
+        const doGrupo = itens.filter((i) => i.secao === s.id)
+        if (!doGrupo.length) return null
+        return (
+          <div key={s.id} className="flex flex-col gap-1">
+            {s.nome && <p className="mt-2 px-3 text-[11px] font-bold uppercase tracking-widest text-white/50">{s.nome}</p>}
+            {doGrupo.map((i) => (
+              <NavLink key={i.para} to={i.para} end={i.para === '/'} className={linkCls} onClick={aoClicar}>
+                <Icone nome={i.icone} />
+                {i.nome}
+              </NavLink>
+            ))}
+          </div>
+        )
+      })}
+    </>
+  )
 }
 
 function Logo({ claro = false }: { claro?: boolean }) {
@@ -82,8 +114,8 @@ export function Layout() {
   const [menu, setMenu] = useState(false)
   const loc = useLocation()
   const itens = itensDoPerfil(u.perfil)
-  const inferior = INFERIOR[u.perfil === 'convidado' ? 'convidado' : 'interno'].map((p) => ITENS.find((i) => i.para === p)!)
-  const { atual } = nivelDe(xpTotal(banco, u.id), banco.niveis)
+  const inferior = INFERIOR.map((p) => ITENS.find((i) => i.para === p)!)
+  const st = statusJogador(banco, u.id)
 
   useEffect(() => setMenu(false), [loc.pathname])
   useEffect(() => window.scrollTo({ top: 0 }), [loc.pathname])
@@ -99,19 +131,14 @@ export function Layout() {
         <div className="rounded-xl bg-white p-2">
           <Logo />
         </div>
-        <nav className="flex flex-col gap-1">
-          {itens.map((i) => (
-            <NavLink key={i.para} to={i.para} end={i.para === '/'} className={linkCls}>
-              <Icone nome={i.icone} />
-              {i.nome}
-            </NavLink>
-          ))}
+        <nav className="flex flex-col gap-1" aria-label="Seções do app">
+          <MenuSecoes itens={itens} />
         </nav>
         <div className="mt-auto flex items-center gap-2 rounded-xl bg-white/10 p-2 text-white">
-          <Avatar nome={u.nome} moldura={u.molduraAtiva} tamanho={36} />
+          <AvatarLeao avatar={u.avatar} tamanho={40} estrelas={st.prestigio.estrelas} />
           <div className="min-w-0 flex-1 text-sm">
             <p className="truncate font-bold">{u.nome}</p>
-            <p className="truncate text-white/70">{u.perfil === 'convidado' || u.perfil === 'admin' ? t.perfil[u.perfil] : `Nível ${atual.nivel} · ${atual.nome}`}</p>
+            <p className="truncate text-white/70">{u.perfil === 'admin' ? t.perfil.admin : `Nível ${st.atual.nivel} · ${st.titulo}`}</p>
           </div>
           <button className="inline-flex h-11 w-11 items-center justify-center rounded-lg hover:bg-white/10" onClick={() => sair()} aria-label={t.nav.sair}>
             <Icone nome="sair" />
@@ -125,7 +152,13 @@ export function Layout() {
             <Logo />
           </div>
           <div className="flex items-center gap-1">
-            <span className="mr-2 hidden rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white sm:inline">{t.app.exemplo}</span>
+            <span className="mr-2 hidden rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white lg:inline">{t.app.exemplo}</span>
+            {u.perfil !== 'admin' && (
+              <Link to="/loja" className="mr-1 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-white hover:bg-white/10" aria-label={`${st.patinhas} Patinhas e ${st.xp} XP`}>
+                <Patinhas valor={st.patinhas} className="text-[#F5D67A]" />
+                <span className="hidden font-titulo text-sm font-bold text-rs-ciano sm:inline">Nv {st.atual.nivel}</span>
+              </Link>
+            )}
             <Sino />
             <button className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white hover:bg-white/10 md:hidden" onClick={() => setMenu(true)} aria-label={t.nav.menu} aria-expanded={menu}>
               <Icone nome="menu" />
@@ -173,7 +206,7 @@ export function Layout() {
           <div className="absolute inset-y-0 right-0 flex w-[min(20rem,88vw)] flex-col gap-3 overflow-y-auto bg-weg-900 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white">
-                <Avatar nome={u.nome} moldura={u.molduraAtiva} tamanho={40} />
+                <AvatarLeao avatar={u.avatar} tamanho={44} estrelas={st.prestigio.estrelas} />
                 <div className="text-sm">
                   <p className="font-bold">{u.nome}</p>
                   <p className="text-white/70">{t.perfil[u.perfil]}</p>
@@ -184,12 +217,7 @@ export function Layout() {
               </button>
             </div>
             <nav className="flex flex-col gap-1">
-              {itens.map((i) => (
-                <NavLink key={i.para} to={i.para} end={i.para === '/'} className={linkCls} onClick={() => setMenu(false)}>
-                  <Icone nome={i.icone} />
-                  {i.nome}
-                </NavLink>
-              ))}
+              <MenuSecoes itens={itens} aoClicar={() => setMenu(false)} />
               <button className={linkCls({ isActive: false })} onClick={() => sair()}>
                 <Icone nome="sair" />
                 {t.nav.sair}

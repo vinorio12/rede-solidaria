@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useUsuario } from '@/auth/AuthContext'
 import { useBanco } from '@/data/useBanco'
 import { cicloAtivo } from '@/domain/regras'
-import { concluirQuiz, responderPerguntaDia } from '@/domain/servicos'
+import { concluirQuiz, registrar } from '@/domain/servicos'
+import { GLOSSARIO_TERMOS, LICOES_GUIA } from '@/domain/conteudo'
+import { diaSP } from '@/lib/tempo'
+import { Icone } from '@/components/Icone'
 import { Mascote } from '@/components/Mascote'
 import { Aviso, CabecalhoPagina, Campo } from '@/components/ui'
 import { avisar, confete } from '@/components/Feedback'
@@ -28,14 +31,6 @@ function perguntas(pctFia: number, pctIdoso: number, pctGlobal: number): Pergunt
   ]
 }
 
-const GLOSSARIO: [string, string][] = [
-  ['FIA', 'Fundo da Infância e Adolescência: fundo municipal, estadual ou nacional dos direitos da criança e do adolescente.'],
-  ['CMDCA', 'Conselho Municipal dos Direitos da Criança e do Adolescente, gestor do FIA no município.'],
-  ['CMDI', 'Conselho Municipal dos Direitos da Pessoa Idosa, gestor do Fundo do Idoso no município.'],
-  ['Chancela', 'Aprovação de um projeto pelo conselho, que autoriza a captação com indicação da entidade.'],
-  ['DARF', 'Documento de Arrecadação de Receitas Federais, gerado pelo programa da declaração para pagar a doação.'],
-  ['Imposto devido', 'Valor total do imposto calculado na declaração, antes de descontar o que já foi retido na fonte.'],
-]
 
 const FAQ: [string, string][] = [
   ['Preciso guardar o comprovante?', 'Sim. Guarde o DARF pago ou o recibo emitido pelo fundo por pelo menos 5 anos e envie uma cópia pelo app.'],
@@ -43,6 +38,12 @@ const FAQ: [string, string][] = [
   ['Posso escolher a entidade?', 'Na doação direta, conforme o fundo, você pode indicar um projeto chancelado. Use a carta de destinação do app.'],
   ['O valor que eu doar aparece no ranking?', 'Nunca. O ranking usa só XP, e o XP é o mesmo para qualquer valor.'],
 ]
+
+function avisarMissoes(feitas: { titulo: string }[]) {
+  if (!feitas.length) return
+  confete()
+  avisar(`Missão concluída: ${feitas.map((m) => m.titulo).join(', ')}`)
+}
 
 export function Guia() {
   const u = useUsuario()
@@ -61,20 +62,33 @@ export function Guia() {
       <CabecalhoPagina titulo="Guia prático do IR" subtitulo="Passo a passo para destinar parte do seu Imposto de Renda." />
       {!g.revisadoFiscal && <Aviso tipo="alerta">Conteúdo em revisão pela área fiscal e jurídica. Percentuais e prazos são configuráveis e revistos a cada ano.</Aviso>}
 
-      <Passo n={1} titulo="O que é e por que destinar" mascote="acenando">
-        Uma parte do imposto que você já paga pode ir para os fundos da criança, do adolescente e da pessoa idosa. <strong>Não há custo adicional</strong>: você só escolhe que o recurso fique no seu município.
-      </Passo>
-      <Passo n={2} titulo="Quem pode" mascote="pensando">
-        Pessoa física que faz a declaração no <strong>modelo completo</strong>. Quem tem imposto a restituir também pode destinar.
-      </Passo>
-      <Passo n={3} titulo="Na declaração" mascote="apontando">
-        Até <strong>{g.pctFia}%</strong> do imposto devido para o Fundo da Criança e do Adolescente e até <strong>{g.pctIdoso}%</strong> para o Fundo do Idoso, na ficha “Doações diretamente na declaração”. O programa gera o DARF, que deve ser pago até o prazo final da entrega ({data(ciclo.prazoDeclaracao)}).
-      </Passo>
-      <Passo n={4} titulo="Durante o ano (até 31/12)" mascote="comemorando">
-        Doação direta aos fundos até <strong>{data(ciclo.prazoDoacaoDireta)}</strong>, observando o limite global de <strong>{g.pctGlobalDoacaoDireta}%</strong> do imposto devido. Conforme o fundo, dá para vincular a doação a uma entidade ou projeto chancelado. O valor é informado na declaração do ano seguinte.
-      </Passo>
+      {LICOES_GUIA.map((l, i) => {
+        const texto = l.texto
+          .replace('{pctFia}', String(g.pctFia))
+          .replace('{pctIdoso}', String(g.pctIdoso))
+          .replace('{pctGlobal}', String(g.pctGlobalDoacaoDireta))
+          .replace('{prazoDeclaracao}', data(ciclo.prazoDeclaracao))
+          .replace('{prazoDoacao}', data(ciclo.prazoDoacaoDireta))
+        const feita = b.eventos.some((e) => e.usuarioId === u.id && e.tipo === 'licao_guia_concluida' && e.dados.ref === l.id && !e.estornado)
+        return (
+          <Passo key={l.id} n={i + 1} titulo={l.titulo} mascote={l.mascote}>
+            {texto}
+            <span className="mt-3 block">
+              {feita ? (
+                <span className="chip bg-sucesso-claro text-sucesso">
+                  <Icone nome="check" tamanho={14} /> Lição concluída
+                </span>
+              ) : (
+                <button className="botao-secundario min-h-9 px-3 py-1 text-xs" onClick={() => avisarMissoes(registrar(u.id, 'licao_guia_concluida', { ref: l.id }, l.id))}>
+                  Concluir lição
+                </button>
+              )}
+            </span>
+          </Passo>
+        )
+      })}
 
-      <Simulador pctFia={g.pctFia} pctIdoso={g.pctIdoso} pctGlobal={g.pctGlobalDoacaoDireta} />
+      <Simulador pctFia={g.pctFia} pctIdoso={g.pctIdoso} pctGlobal={g.pctGlobalDoacaoDireta} aoUsar={() => avisarMissoes(registrar(u.id, 'simulador_usado', {}, `simulador:${diaSP()}`))} />
       <PerguntaDoDia uid={u.id} perguntas={qs} />
       <Quiz uid={u.id} perguntas={qs} xp={b.configuracoes.tabelaXp.quiz} />
 
@@ -93,14 +107,14 @@ export function Guia() {
         <h2 id="glossario" className="mb-2 font-titulo text-lg font-bold text-weg-900">
           Glossário
         </h2>
-        <dl className="space-y-2 text-sm">
-          {GLOSSARIO.map(([termo, def]) => (
-            <div key={termo}>
-              <dt className="font-bold text-rs-azul">{termo}</dt>
-              <dd className="text-suave">{def}</dd>
-            </div>
+        <div className="text-sm">
+          {GLOSSARIO_TERMOS.map(([termo, def]) => (
+            <details key={termo} className="border-b border-borda py-1 last:border-0" onToggle={(e) => (e.currentTarget as HTMLDetailsElement).open && registrar(u.id, 'glossario_termo_aberto', { ref: termo }, termo)}>
+              <summary className="flex min-h-11 cursor-pointer items-center font-bold text-rs-azul">{termo}</summary>
+              <p className="pb-2 text-suave">{def}</p>
+            </details>
           ))}
-        </dl>
+        </div>
       </section>
     </div>
   )
@@ -122,15 +136,30 @@ function Passo({ n, titulo, mascote, children }: { n: number; titulo: string; ma
 }
 
 /** Simulador: o valor informado não é armazenado em lugar nenhum. */
-function Simulador({ pctFia, pctIdoso, pctGlobal }: { pctFia: number; pctIdoso: number; pctGlobal: number }) {
+function Simulador({ pctFia, pctIdoso, pctGlobal, aoUsar }: { pctFia: number; pctIdoso: number; pctGlobal: number; aoUsar: () => void }) {
   const [devido, setDevido] = useState(0)
+  const usado = useRef(false)
   return (
     <section className="cartao space-y-3" aria-labelledby="simulador">
       <h2 id="simulador" className="font-titulo text-lg font-bold text-weg-900">
         Simulador
       </h2>
       <Campo rotulo="Imposto devido estimado (R$)" ajuda="Esse valor não é salvo.">
-        <input className="campo" type="number" inputMode="decimal" min={0} value={devido || ''} onChange={(e) => setDevido(Number(e.target.value))} autoComplete="off" />
+        <input
+          className="campo"
+          type="number"
+          inputMode="decimal"
+          min={0}
+          value={devido || ''}
+          onChange={(e) => setDevido(Number(e.target.value))}
+          onBlur={() => {
+            if (devido > 0 && !usado.current) {
+              usado.current = true
+              aoUsar()
+            }
+          }}
+          autoComplete="off"
+        />
       </Campo>
       {devido > 0 && (
         <div className="grid gap-2 sm:grid-cols-3">
@@ -170,11 +199,7 @@ function PerguntaDoDia({ uid, perguntas }: { uid: string; perguntas: Pergunta[] 
             disabled={resp !== null}
             onClick={() => {
               setResp(i)
-              const feitas = responderPerguntaDia(uid)
-              if (feitas.length) {
-                confete()
-                avisar(`Missão concluída: +${feitas[0].xp} XP`)
-              }
+              avisarMissoes(registrar(uid, 'pergunta_do_dia_respondida', { ref: q.p }, `pergunta:${diaSP()}`))
             }}
             className={`min-h-11 rounded-xl border px-3 text-left transition ${resp === null ? 'border-borda hover:border-rs-azul' : i === q.certa ? 'border-sucesso bg-sucesso-claro' : resp === i ? 'border-alerta bg-alerta-claro' : 'border-borda opacity-60'}`}
           >
@@ -198,6 +223,7 @@ function Quiz({ uid, perguntas, xp }: { uid: string; perguntas: Pergunta[]; xp: 
     setResultado({ acertos, aprovado: r.aprovado })
     if (r.aprovado) confete()
     if (r.ganhouXp) avisar(`Quiz concluído: +${xp} XP`)
+    else if (r.aprovado) avisar('Quiz concluído. O XP do quiz já foi recebido nesta edição.', 'info')
   }
 
   return (

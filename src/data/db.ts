@@ -16,7 +16,8 @@ function carregar(): Banco {
     const bruto = globalThis.localStorage?.getItem(CHAVE)
     if (bruto) {
       const salvo = JSON.parse(bruto) as Banco
-      if (salvo.versao === VERSAO_SEED) return salvo
+      // dados de uma versão anterior do modelo são descartados (o app recria o exemplo)
+      if (salvo.versao === VERSAO_SEED && Array.isArray(salvo.eventos) && Array.isArray(salvo.usuarios)) return salvo
     }
   } catch {
     // armazenamento indisponível: segue com os dados de exemplo em memória

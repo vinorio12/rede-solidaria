@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
+import { Link } from 'react-router-dom'
 import { useUsuario } from '@/auth/AuthContext'
 import { useBanco } from '@/data/useBanco'
-import { enviarConvites, simularAceite } from '@/domain/servicos'
+import { enviarConvites, gerarLinkConvidado, linkConvidadoDe, renovarLinkConvidado, simularAceite } from '@/domain/servicos'
 import { Icone } from '@/components/Icone'
 import { Abas, CabecalhoPagina, Campo } from '@/components/ui'
 import { avisar, confete, tentar } from '@/components/Feedback'
@@ -26,12 +27,19 @@ export function Convidar() {
   const convites = b.convites.filter((c) => c.usuarioId === u.id).sort((a, c) => c.em.localeCompare(a.em))
   const cfg = b.configuracoes
   const xpAceite = cfg.tabelaXp.conviteAceito
-  const xpBonus = cfg.tabelaXp.bonusPadrinho
+  const xpConvidado = cfg.tabelaXp.reporteConvidado
+  const linkConv = linkConvidadoDe(b, u.id)
+  const urlConvidado = linkConv ? (location.protocol === 'file:' ? `${location.href.split('#')[0]}#/r/${linkConv.codigo}` : `${location.origin}/r/${linkConv.codigo}`) : ''
+  const [qrConvidado, setQrConvidado] = useState('')
+  const usadosConvidado = b.reportes.filter((r) => r.usuarioId === u.id && r.convidado && r.ciclo === cfg.cicloAtivo && r.status !== 'recusado_colaborador').length
 
   useEffect(() => {
     QRCode.toDataURL(link, { margin: 1, width: 360, color: { dark: '#00325C', light: '#FFFFFF' } }).then(setQr)
   }, [link])
   useEffect(() => setMsg(MENSAGENS[tipo](link)), [tipo, link])
+  useEffect(() => {
+    if (urlConvidado) QRCode.toDataURL(urlConvidado, { margin: 1, width: 360, color: { dark: '#00325C', light: '#FFFFFF' } }).then(setQrConvidado)
+  }, [urlConvidado])
 
   const copiar = async (txt: string) => {
     try {
@@ -47,7 +55,47 @@ export function Convidar() {
 
   return (
     <div className="space-y-5">
-      <CabecalhoPagina titulo="Convidar" subtitulo={`+${xpAceite} XP por convite aceito e +${xpBonus} XP quando o convidado tiver o reporte validado.`} />
+      <CabecalhoPagina titulo="Convidar" subtitulo={`+${xpAceite} XP por colega que aceita o convite e +${xpConvidado} XP por reporte de convidado validado.`} />
+
+      <section id="link-convidado" className="cartao scroll-mt-24 space-y-3 border-rs-azul/40">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h2 className="font-titulo text-lg font-bold text-weg-900">Link de reporte de convidado</h2>
+            <p className="text-sm text-suave">
+              Amigos, vizinhos e familiares não cadastrados reportam a destinação em seu nome, sem criar conta. Você confirma e o XP vem para você. {usadosConvidado}/{cfg.convidados.limitePorEdicao} nesta edição.
+            </p>
+          </div>
+          <Link to="/convidados" className="botao-secundario">
+            Ver reportes de convidados
+          </Link>
+        </div>
+        {linkConv ? (
+          <div className="grid items-center gap-4 sm:grid-cols-[auto_1fr]">
+            {qrConvidado && <img src={qrConvidado} alt="QR Code do seu link de convidado" width={150} height={150} className="mx-auto rounded-xl border border-borda" />}
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input className="campo text-sm" readOnly value={urlConvidado} aria-label="Link de convidado" onFocus={(e) => e.target.select()} />
+                <button className="botao-secundario" onClick={() => copiar(urlConvidado)} aria-label="Copiar link de convidado">
+                  <Icone nome="copiar" />
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a className="botao-primario" href={`https://wa.me/?text=${encodeURIComponent(`Oi! Se você destinou parte do IR aos fundos da criança ou do idoso, reporte por este link para eu registrar na Rede Solidária WEG (leva 2 minutos, sem cadastro): ${urlConvidado}`)}`} target="_blank" rel="noreferrer">
+                  <Icone nome="mensagem" /> Enviar por WhatsApp
+                </a>
+                <button className="botao-fantasma" onClick={() => tentar(() => renovarLinkConvidado(u.id), 'Link renovado. O anterior deixou de funcionar.')}>
+                  Gerar novo link
+                </button>
+              </div>
+              <p className="text-xs text-suave">Proteções: limite de envios por link e por aparelho por dia, validação do arquivo e confirmação sua antes da Seção DS.</p>
+            </div>
+          </div>
+        ) : (
+          <button className="botao-primario" onClick={() => tentar(() => gerarLinkConvidado(u.id), 'Link de convidado criado.')}>
+            Gerar meu link de convidado
+          </button>
+        )}
+      </section>
       <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
         <section className="cartao flex flex-col items-center gap-3 text-center">
           <h2 className="font-titulo font-bold text-weg-900">Seu link e QR Code</h2>

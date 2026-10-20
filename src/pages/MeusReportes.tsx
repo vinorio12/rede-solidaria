@@ -45,14 +45,14 @@ export function MeusReportes() {
                   <li key={r.id}>
                     <Link to={`/reportes/${r.id}`} className="cartao flex items-center gap-3 transition hover:border-rs-azul">
                       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rs-ciano-claro text-rs-azul">
-                        <Icone nome={fam ? 'familia' : 'documento'} />
+                        <Icone nome={r.convidado ? 'convidar' : fam ? 'familia' : 'documento'} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block font-semibold">
                           {t.fundoCurto[r.fundoTipo]} · {r.municipio}/{r.uf}
                         </span>
                         <span className="block text-sm text-suave">
-                          {fam ? `${fam.nome} · ` : ''}
+                          {r.convidado ? `${r.convidado.nome} (convidado) · ` : fam ? `${fam.nome} · ` : ''}
                           {t.modalidade[r.modalidade]} · {data(r.dataPagamento)}
                         </span>
                       </span>
@@ -106,7 +106,7 @@ export function DetalheReporte() {
         </Aviso>
       )}
       <dl className="cartao grid gap-3 text-sm sm:grid-cols-2">
-        <Linha r="Em nome de" v={fam ? `${fam.nome} (${t.parentesco[fam.parentesco]})` : 'Próprio colaborador'} />
+        <Linha r="Em nome de" v={r.convidado ? `${r.convidado.nome} (${t.relacaoConvidado[r.convidado.relacao]}, convidado)` : fam ? `${fam.nome} (${t.parentesco[fam.parentesco]})` : 'Próprio colaborador'} />
         <Linha r="Modalidade" v={t.modalidade[r.modalidade]} />
         <Linha r="Fundo" v={`${t.fundo[r.fundoTipo]} · ${t.esfera[r.esfera]}`} />
         <Linha r="Município" v={`${r.municipio}/${r.uf}`} />

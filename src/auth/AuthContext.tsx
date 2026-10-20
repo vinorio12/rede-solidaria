@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useBanco } from '@/data/useBanco'
 import type { Usuario } from '@/domain/types'
+import { prepararMissoes } from '@/domain/servicos'
 
 // Camada de autenticação abstrata. Nesta versão o login é simulado por um
 // seletor de perfis de teste; o SSO corporativo WEG entra implementando
@@ -62,8 +63,13 @@ export function AuthProvider({ children, provedor = provedorSimulado }: { childr
   }, [provedor])
 
   useEffect(() => {
-    document.documentElement.dataset.tema = usuario?.temaAtivo ?? ''
-  }, [usuario?.temaAtivo])
+    document.documentElement.dataset.tema = usuario?.avatar.tema ?? ''
+  }, [usuario?.avatar.tema])
+
+  // diárias e semanais são sorteadas no primeiro acesso do dia/semana
+  useEffect(() => {
+    if (usuario && usuario.perfil !== 'admin') prepararMissoes(usuario.id)
+  }, [usuario?.id, usuario?.perfil])
 
   return <Ctx.Provider value={{ usuario, provedor, entrar, sair }}>{children}</Ctx.Provider>
 }

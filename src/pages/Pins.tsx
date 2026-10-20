@@ -1,13 +1,14 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useUsuario } from '@/auth/AuthContext'
-import { useBanco } from '@/data/useBanco'
+import { useBanco, useEstavel } from '@/data/useBanco'
 import type { Pin } from '@/domain/types'
 import { CabecalhoPagina } from '@/components/ui'
 import { LimiteErro } from '@/components/LimiteErro'
 import { Mascote } from '@/components/Mascote'
 import { Icone } from '@/components/Icone'
 import { confete } from '@/components/Feedback'
+import { registrar } from '@/domain/servicos'
 import { arteDoPin, suportaWebGL, urlFace } from '@/lib/pinArte'
 import { data } from '@/lib/datas'
 import { lazyComNovaTentativa } from '@/lib/carregar'
@@ -42,9 +43,14 @@ export function Pins() {
   const meus = b.usuarioPins.filter((p) => p.usuarioId === u.id)
   const pins = [...b.pins].sort((a, c) => c.ano - a.ano)
   const anoSel = Number(params.get('ano')) || pins.find((p) => p.arte)?.ano || pins[0]?.ano
-  const pin = pins.find((p) => p.ano === anoSel) ?? pins[0]
-  const conquistado = meus.find((p) => p.ano === pin?.ano)
+  const pin = useEstavel(pins.find((p) => p.ano === anoSel) ?? pins[0])
+  const conquistado = useEstavel(meus.find((p) => p.ano === pin?.ano))
   const [webgl, setWebgl] = useState(suportaWebGL)
+
+  const anoVisto = pin && conquistado ? pin.ano : null
+  useEffect(() => {
+    if (anoVisto) registrar(u.id, 'pin_visualizado', { ref: String(anoVisto) }, `pin:${anoVisto}`)
+  }, [anoVisto, u.id])
 
   // brilho na primeira vez que o usuário vê um pin recém-desbloqueado
   const [brilho, setBrilho] = useState(false)

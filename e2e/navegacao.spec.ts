@@ -98,3 +98,34 @@ test('Sem WebGL 2 a coleção de pins mostra a imagem 2D e o app continua naveg�
   await page.locator('aside nav a', { hasText: 'Ranking' }).click()
   await conferirTela(page, 'ranking depois dos pins', erros)
 })
+
+function rota(baseURL: string | undefined, caminho: string) {
+  return baseURL === 'arquivo' ? `${ARQUIVO}#/${caminho}` : `${baseURL}${caminho}`
+}
+
+test('Login não oferece perfil Convidado e o formulário público abre sem login', async ({ page, baseURL }) => {
+  const erros = vigiarErros(page)
+  await page.goto(inicio(baseURL))
+  await page.evaluate(() => localStorage.clear())
+  await page.goto(inicio(baseURL))
+  await expect(page.getByRole('button', { name: /Colaborador/ }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: /Convidado/ })).toHaveCount(0)
+  await page.goto(rota(baseURL, 'r/CAMILA1'))
+  await expect(page.getByRole('heading', { name: /Reporte de convidado/i }).first()).toBeVisible()
+  await expect(page.locator('aside nav')).toHaveCount(0)
+  await expect(page.getByLabel(/Relação com/i).first()).toBeVisible()
+  await conferirTela(page, 'formulário de convidado', erros)
+  await page.goto(rota(baseURL, 'r/NAOEXISTE'))
+  await conferirTela(page, 'link de convidado inválido', erros)
+})
+
+test('Ranking e mural não mostram valores doados', async ({ page, baseURL }) => {
+  const erros = vigiarErros(page)
+  await entrar(page, inicio(baseURL), 'Colaborador')
+  for (const item of ['Ranking', 'Mural']) {
+    await page.locator('aside nav a', { hasText: item }).first().click()
+    await page.waitForTimeout(300)
+    await conferirTela(page, item, erros)
+    expect(await page.locator('main').innerText(), `valor em reais em ${item}`).not.toMatch(/R\$/)
+  }
+})

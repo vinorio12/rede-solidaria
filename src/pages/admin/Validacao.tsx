@@ -10,12 +10,12 @@ import { avisar, tentar } from '@/components/Feedback'
 import { data, dataHora, moeda } from '@/lib/datas'
 import { t } from '@/i18n/pt-BR'
 
-type Filtro = 'fila' | 'validado' | 'devolvido' | 'padrinho' | 'todos'
+type Filtro = 'fila' | 'validado' | 'devolvido' | 'convidados' | 'todos'
 const FILTROS: Record<Filtro, StatusReporte[] | null> = {
   fila: ['enviado', 'em_validacao'],
   validado: ['validado'],
-  devolvido: ['devolvido', 'estornado', 'recusado_padrinho'],
-  padrinho: ['aguardando_padrinho'],
+  devolvido: ['devolvido', 'estornado', 'recusado_colaborador'],
+  convidados: null,
   todos: null,
 }
 
@@ -25,7 +25,7 @@ export function Validacao() {
   const [filtro, setFiltro] = useState<Filtro>('fila')
   const [selId, setSelId] = useState<string | null>(null)
   const [motivo, setMotivo] = useState('')
-  const lista = b.reportes.filter((r) => !FILTROS[filtro] || FILTROS[filtro]!.includes(r.status)).sort((a, c) => a.criadoEm.localeCompare(c.criadoEm))
+  const lista = b.reportes.filter((r) => (filtro === 'convidados' ? !!r.convidado : !FILTROS[filtro] || FILTROS[filtro]!.includes(r.status))).sort((a, c) => a.criadoEm.localeCompare(c.criadoEm))
   const sel = b.reportes.find((r) => r.id === selId) ?? null
 
   return (
@@ -40,7 +40,7 @@ export function Validacao() {
           }}
           abas={[
             { id: 'fila', nome: 'Na fila' },
-            { id: 'padrinho', nome: 'Com padrinho' },
+            { id: 'convidados', nome: 'De convidados' },
             { id: 'validado', nome: 'Validados' },
             { id: 'devolvido', nome: 'Devolvidos' },
             { id: 'todos', nome: 'Todos' },
@@ -61,7 +61,7 @@ export function Validacao() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">
-                      {u?.nome} {u?.perfil === 'convidado' && <span className="chip bg-fundo text-suave">convidado</span>}
+                      {r.convidado ? `${r.convidado.nome} → ${u?.nome}` : u?.nome} {r.convidado && <span className="chip bg-fundo text-suave">convidado</span>}
                     </p>
                     <p className="text-xs text-suave">
                       {t.fundoCurto[r.fundoTipo]} · {r.municipio} · enviado em {dataHora(r.criadoEm)}
@@ -109,7 +109,7 @@ export function Validacao() {
         </div>
         {r.duplicidadeSuspeita && <Aviso tipo="alerta">Possível duplicidade: {r.duplicidadeSuspeita}</Aviso>}
         <dl className="grid grid-cols-2 gap-2 text-sm">
-          <Info r="Em nome de" v={fam ? `${fam.nome} (${t.parentesco[fam.parentesco]})` : 'Próprio'} />
+          <Info r="Em nome de" v={r.convidado ? `${r.convidado.nome} (${t.relacaoConvidado[r.convidado.relacao]}, convidado; XP para o colaborador)` : fam ? `${fam.nome} (${t.parentesco[fam.parentesco]})` : 'Próprio'} />
           <Info r="Modalidade" v={t.modalidade[r.modalidade]} />
           <Info r="Fundo" v={`${t.fundo[r.fundoTipo]} · ${t.esfera[r.esfera]}`} />
           <Info r="Município" v={`${r.municipio}/${r.uf}`} />
@@ -162,9 +162,15 @@ export function Validacao() {
         {r.status === 'validado' && (
           <div className="space-y-2 border-t border-borda pt-3">
             <textarea className="campo min-h-20" placeholder="Motivo do estorno" value={motivo} onChange={(e) => setMotivo(e.target.value)} aria-label="Motivo do estorno" />
-            <button className="botao w-full border border-alerta text-alerta hover:bg-alerta-claro" disabled={!motivo.trim()} onClick={() => tentar(() => estornar(r.id, motivo.trim(), adminId), 'Reporte estornado e XP removido.')}>
-              Estornar
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button className="botao flex-1 border border-alerta text-alerta hover:bg-alerta-claro" disabled={!motivo.trim()} onClick={() => tentar(() => devolver(r.id, motivo.trim(), adminId), 'Reporte devolvido para ajuste; XP, Patinhas e insígnias derivadas foram estornados.')}>
+                Devolver para ajuste
+              </button>
+              <button className="botao flex-1 border border-alerta text-alerta hover:bg-alerta-claro" disabled={!motivo.trim()} onClick={() => tentar(() => estornar(r.id, motivo.trim(), adminId), 'Reporte estornado e prêmios removidos.')}>
+                Estornar
+              </button>
+            </div>
+            <p className="text-xs text-suave">As duas opções desfazem XP, Patinhas, pontos de temporada, insígnias derivadas e o pin (se não houver outra destinação na edição).</p>
           </div>
         )}
         <details className="text-sm">

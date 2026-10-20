@@ -12,7 +12,6 @@ import fotoPin from '@/assets/pins/2026/foto-pin.png'
 const PERFIS_TESTE = [
   { id: 'u_colab', titulo: 'Colaborador', texto: 'Acesso completo: reportes, família, missões, ranking e coleção de pins.' },
   { id: 'u_emb', titulo: 'Embaixador', texto: 'Tudo do colaborador, com selo e missões exclusivas.' },
-  { id: 'u_conv', titulo: 'Convidado', texto: 'Acesso limitado, com reportes aprovados pelo padrinho.' },
   { id: 'u_admin', titulo: 'Administrador', texto: 'Painel da Seção Desenvolvimento Social.' },
 ]
 
@@ -49,7 +48,7 @@ export function Login() {
           <p className="mt-1 text-sm text-suave">
             {provedor.nome}. O login corporativo WEG será integrado em uma próxima etapa. Escolha um perfil de teste:
           </p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
             {PERFIS_TESTE.map((p) => {
               const u = banco.usuarios.find((x) => x.id === p.id)
               return (
@@ -79,10 +78,11 @@ export function Login() {
             </button>
           </div>
 
-          <div className="mt-5 border-t border-borda pt-4">
-            <p className="text-sm font-semibold">Não é colaborador WEG?</p>
-            <Link to="/cadastro-convidado" className="botao-secundario mt-2 w-full">
-              <Icone nome="convidar" /> Criar cadastro de convidado
+          <div className="mt-5 border-t border-borda pt-4 text-sm text-suave">
+            <p className="font-semibold text-texto">Não é colaborador WEG?</p>
+            <p className="mt-1">O app é exclusivo para colaboradores. Familiares e amigos reportam pelo link de convidado que o colaborador compartilha, sem precisar de cadastro.</p>
+            <Link to="/r/CAMILA1" className="mt-2 inline-flex min-h-11 items-center gap-1 font-semibold text-rs-azul underline">
+              <Icone nome="convidar" tamanho={18} /> Ver o formulário de convidado (exemplo)
             </Link>
           </div>
           <button

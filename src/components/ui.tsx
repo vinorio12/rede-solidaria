@@ -18,12 +18,12 @@ export function BarraProgresso({ valor, max = 1, rotulo, cor = 'ciano', altura =
 }
 
 const CORES_STATUS: Record<StatusReporte, string> = {
-  aguardando_padrinho: 'bg-alerta-claro text-alerta',
+  aguardando_colaborador: 'bg-alerta-claro text-alerta',
   enviado: 'bg-rs-ciano-claro text-weg-900',
   em_validacao: 'bg-rs-ciano-claro text-weg-700',
   validado: 'bg-sucesso-claro text-sucesso',
   devolvido: 'bg-alerta-claro text-alerta',
-  recusado_padrinho: 'bg-alerta-claro text-alerta',
+  recusado_colaborador: 'bg-slate-200 text-slate-700',
   estornado: 'bg-slate-200 text-slate-700',
 }
 

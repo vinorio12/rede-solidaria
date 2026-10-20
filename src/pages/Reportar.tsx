@@ -4,7 +4,7 @@ import { useUsuario } from '@/auth/AuthContext'
 import { useBanco } from '@/data/useBanco'
 import { cicloAtivo, previaXp } from '@/domain/regras'
 import { enviarReporte, ErroRegra, prepararComprovantes, rascunhoReporte, salvarFamiliar, TAMANHO_MAX_COMPROVANTE, type DadosReporte } from '@/domain/servicos'
-import type { Comprovante, Familiar, Reporte } from '@/domain/types'
+import type { Comprovante, Familiar, RelacaoConvidado, Reporte } from '@/domain/types'
 import { Mascote } from '@/components/Mascote'
 import { Icone } from '@/components/Icone'
 import { Aviso, BarraProgresso, CabecalhoPagina, Campo, ChipStatus } from '@/components/ui'
@@ -18,12 +18,12 @@ export function Reportar() {
   const u = useUsuario()
   const b = useBanco()
   const [params] = useSearchParams()
-  const convidado = u.perfil === 'convidado'
   const entidadeInicial = b.entidades.find((e) => e.id === params.get('entidade'))
   const carta = b.cartas.find((c) => c.id === params.get('carta'))
 
-  const [etapa, setEtapa] = useState(convidado ? 1 : 0)
+  const [etapa, setEtapa] = useState(0)
   const [d, setD] = useState<DadosReporte>(() => ({
+    familiarId: b.familiares.find((f) => f.id === params.get('familiar') && f.usuarioId === u.id)?.id,
     modalidade: entidadeInicial ? 'doacao_direta' : 'declaracao',
     fundoTipo: entidadeInicial?.publico ?? 'FIA',
     esfera: 'municipal',
@@ -51,7 +51,7 @@ export function Reportar() {
   const set = <K extends keyof DadosReporte>(k: K, v: DadosReporte[K]) => setD((x) => ({ ...x, [k]: v }))
 
   const podeAvancar = [
-    true,
+    !d.convidado || d.convidado.nome.trim().length >= 3,
     true,
     !!d.municipio,
     d.valor > 0 && !!d.dataPagamento,
@@ -93,8 +93,8 @@ export function Reportar() {
         <Mascote variante="comemorando" tamanho={150} className="mx-auto" />
         <h1 className="titulo-pagina">Reporte enviado</h1>
         <p className="text-suave">
-          {convidado
-            ? 'Seu padrinho foi avisado. Depois da aprovação, o reporte segue para a validação da Seção Desenvolvimento Social.'
+          {enviado.convidado
+            ? `O reporte em nome de ${enviado.convidado.nome} segue para a validação da Seção Desenvolvimento Social. O XP vem para você.`
             : 'Agora a Seção Desenvolvimento Social vai validar o comprovante. Você acompanha tudo em Meus reportes.'}
         </p>
         <div className="cartao space-y-2 text-left">
@@ -116,11 +116,11 @@ export function Reportar() {
             className="botao-secundario"
             onClick={() => {
               setEnviado(null)
-              setEtapa(convidado ? 1 : 0)
+              setEtapa(0)
               setArquivos([])
               setLgpd(false)
               setVeracidade(false)
-              setD((x) => ({ ...x, familiarId: undefined, valor: 0, cartaId: undefined }))
+              setD((x) => ({ ...x, familiarId: undefined, convidado: undefined, valor: 0, cartaId: undefined }))
             }}
           >
             Reportar outra destinação
@@ -136,7 +136,7 @@ export function Reportar() {
       <div className="mb-4">
         <div className="mb-1 flex justify-between text-xs font-bold text-suave">
           <span>
-            Etapa {etapa + 1 - (convidado ? 1 : 0)} de {ETAPAS.length - (convidado ? 1 : 0)}
+            Etapa {etapa + 1} de {ETAPAS.length}
           </span>
           <span>{ETAPAS[etapa]}</span>
         </div>
@@ -151,10 +151,34 @@ export function Reportar() {
         {etapa === 0 && (
           <fieldset className="space-y-2">
             <legend className="sr-only">Em nome de quem</legend>
-            <Opcao nome="quem" marcado={!d.familiarId} aoMarcar={() => set('familiarId', undefined)} titulo="Eu mesmo" texto={u.nome} />
+            <Opcao nome="quem" marcado={!d.familiarId && !d.convidado} aoMarcar={() => setD((x) => ({ ...x, familiarId: undefined, convidado: undefined }))} titulo="Eu mesmo" texto={u.nome} />
             {familiares.map((f) => (
-              <Opcao key={f.id} nome="quem" marcado={d.familiarId === f.id} aoMarcar={() => set('familiarId', f.id)} titulo={f.nome} texto={`${t.parentesco[f.parentesco]} · ${f.municipio}`} />
+              <Opcao key={f.id} nome="quem" marcado={d.familiarId === f.id} aoMarcar={() => setD((x) => ({ ...x, familiarId: f.id, convidado: undefined }))} titulo={f.nome} texto={`${t.parentesco[f.parentesco]} · ${f.municipio}`} />
             ))}
+            <Opcao
+              nome="quem"
+              marcado={!!d.convidado}
+              aoMarcar={() => setD((x) => ({ ...x, familiarId: undefined, convidado: x.convidado ?? { nome: '', relacao: 'amigo' } }))}
+              titulo="Por um convidado"
+              texto="Amigo, vizinho ou familiar não cadastrado que te enviou o comprovante. O XP vem para você."
+            />
+            {d.convidado && (
+              <div className="grid gap-2 rounded-xl border border-dashed border-rs-azul p-3 sm:grid-cols-2">
+                <Campo rotulo="Nome do convidado">
+                  <input className="campo" value={d.convidado.nome} onChange={(e) => set('convidado', { ...d.convidado!, nome: e.target.value })} />
+                </Campo>
+                <Campo rotulo="Relação com você">
+                  <select className="campo" value={d.convidado.relacao} onChange={(e) => set('convidado', { ...d.convidado!, relacao: e.target.value as RelacaoConvidado })}>
+                    {Object.entries(t.relacaoConvidado).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+                <p className="text-xs text-suave sm:col-span-2">Prefere que a pessoa mesma envie? Compartilhe o seu link de convidado na tela Convidar.</p>
+              </div>
+            )}
             {novoFamiliar ? (
               <div className="space-y-2 rounded-xl border border-dashed border-rs-azul p-3">
                 <Campo rotulo="Nome do familiar">
@@ -306,7 +330,7 @@ export function Reportar() {
         {etapa === 6 && (
           <div className="space-y-3">
             <dl className="grid gap-2 text-sm sm:grid-cols-2">
-              <Item r="Em nome de" v={d.familiarId ? familiares.find((f) => f.id === d.familiarId)?.nome : u.nome} />
+              <Item r="Em nome de" v={d.convidado ? `${d.convidado.nome} (convidado)` : d.familiarId ? familiares.find((f) => f.id === d.familiarId)?.nome : u.nome} />
               <Item r="Modalidade" v={t.modalidade[d.modalidade]} />
               <Item r="Fundo" v={`${t.fundo[d.fundoTipo]} (${t.esfera[d.esfera].toLowerCase()})`} />
               <Item r="Município" v={`${d.municipio}/${d.uf}`} />
@@ -320,7 +344,7 @@ export function Reportar() {
               <div>
                 <p className="text-sm">Prévia do XP após a validação</p>
                 <p className="font-titulo text-2xl font-bold">+{numero(xpPrevisto)} XP</p>
-                <p className="text-xs text-white/90">O status inicial será “{convidado ? t.status.aguardando_padrinho : t.status.enviado}”, seguido de “{t.status.em_validacao}”.</p>
+                <p className="text-xs text-white/90">O status inicial será “{t.status.enviado}”, seguido de “{t.status.em_validacao}”. O XP não depende do valor.</p>
               </div>
             </div>
           </div>
@@ -329,7 +353,7 @@ export function Reportar() {
         {erro && <Aviso tipo="alerta">{erro}</Aviso>}
 
         <div className="flex justify-between gap-2 border-t border-borda pt-4">
-          <button className="botao-secundario" onClick={() => setEtapa((e) => e - 1)} disabled={etapa === (convidado ? 1 : 0)}>
+          <button className="botao-secundario" onClick={() => setEtapa((e) => e - 1)} disabled={etapa === 0}>
             <Icone nome="voltar" /> {t.acoes.voltar}
           </button>
           {etapa < ETAPAS.length - 1 ? (

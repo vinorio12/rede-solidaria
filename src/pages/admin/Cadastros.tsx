@@ -51,7 +51,8 @@ export function Cadastros() {
           campos={[
             { chave: 'nome', rotulo: 'Nome do fundo' },
             { chave: 'tipo', rotulo: 'Tipo', tipo: 'select', opcoes: FUNDO_TIPO },
-            { chave: 'conselho', rotulo: 'Conselho gestor', tipo: 'select', opcoes: ['CMDCA', 'CMDI', 'CEDCA', 'CEI', 'CONANDA', 'CNDI'].map((v) => ({ valor: v, nome: v })) },
+            { chave: 'conselho', rotulo: 'Sigla do conselho', tipo: 'select', opcoes: ['CMDCA', 'CMDPI', 'CEDCA', 'CEI', 'CONANDA', 'CNDI'].map((v) => ({ valor: v, nome: v })) },
+            { chave: 'conselhoNome', rotulo: 'Nome do conselho (aparece na carta)', opcional: true },
             { chave: 'esfera', rotulo: 'Esfera', tipo: 'select', opcoes: ['municipal', 'estadual', 'nacional'].map((v) => ({ valor: v, nome: v })) },
             { chave: 'municipio', rotulo: 'Município' },
             { chave: 'uf', rotulo: 'UF' },

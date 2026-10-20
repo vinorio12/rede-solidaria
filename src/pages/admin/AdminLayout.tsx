@@ -10,6 +10,8 @@ const ABAS = [
   { para: '/admin/cadastros', nome: 'Cadastros', icone: 'entidades' },
   { para: '/admin/importacao', nome: 'Importação', icone: 'upload' },
   { para: '/admin/gamificacao', nome: 'Gamificação', icone: 'estrela' },
+  { para: '/admin/analytics', nome: 'Analytics', icone: 'grafico' },
+  { para: '/admin/carta', nome: 'Carta institucional', icone: 'documento' },
   { para: '/admin/usuarios', nome: 'Usuários', icone: 'usuarios' },
   { para: '/admin/relatorios', nome: 'Relatórios', icone: 'tabela' },
   { para: '/admin/auditoria', nome: 'Auditoria', icone: 'documento' },
